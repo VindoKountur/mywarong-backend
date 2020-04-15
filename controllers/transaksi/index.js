@@ -2,7 +2,7 @@ const model = require('../../model');
 
 async function getAllTransaksi(req, res) {
   try {
-    const hasil = await model.getAllTransaksi();
+    const hasil = await model.Transaksi.getAllTransaksi();
     res.json({
       success: true,
       data: hasil,
