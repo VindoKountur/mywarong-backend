@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "server": "nodemon server.js"
+    "server": "nodemon server.js",
+    "dockerup": "docker-compose up",
+    "dockerdown": "docker-compose down"
   },
   "author": "Lifeindo Kountur",
   "license": "ISC",

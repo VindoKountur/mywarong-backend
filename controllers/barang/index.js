@@ -38,6 +38,7 @@ async function getOneBarang(req, res) {
 
 async function addBarang(req, res) {
   try {
+    // new = { nama: 'tes', harga: 2000 }
     const newBarang = req.body;
     const [id] = await model.Barang.addBarang(newBarang);
     res.json({
