@@ -9,6 +9,10 @@ router
   .get(controller.transaksi.getAllTransaksi)
   .post(controller.transaksi.addTransaksi);
 
-router.route('/:idTransaksi').get(controller.transaksi.getOneTransaksi);
+router
+  .route('/:idTransaksi')
+  .get(controller.transaksi.getOneTransaksi)
+  .patch(controller.transaksi.updateTransaksi)
+  .delete(controller.transaksi.deleteTransaksi);
 
 module.exports = router;

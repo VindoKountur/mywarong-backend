@@ -20,8 +20,11 @@ function tanggalSekarang() {
   };
 }
 
-async function insertTransaksiBarang(insertValue) {
-  await db('transaksi_barang').insert(insertValue);
+async function insertTransaksiBarang(transaksi_id, daftarBarang) {
+  daftarBarang.map(async (value) => {
+    const insertValue = { transaksi_id, ...value };
+    await db('transaksi_barang').insert(insertValue);
+  });
 }
 
 const example = [
@@ -62,13 +65,18 @@ async function getOneTransaksi(idTransaksi) {
       .where('transaksi.id', '=', idTransaksi);
 
     const dataBarang = await db
-      .select('barang.nama', 'barang.harga', 'transaksi_barang.jumlah')
+      .select(
+        'barang.id',
+        'barang.nama',
+        'barang.harga',
+        'transaksi_barang.jumlah'
+      )
       .from('transaksi_barang')
       .innerJoin('barang', 'transaksi_barang.barang_id', 'barang.id')
       .where('transaksi_barang.transaksi_id', '=', idTransaksi);
 
     const hasil = {
-      id,
+      transaksi_id: id,
       created_at,
       total_price,
       username,
@@ -82,7 +90,7 @@ async function getOneTransaksi(idTransaksi) {
   }
 }
 
-async function addTransaksi(daftarBarang) {
+async function addTransaksi(totalPrice, daftarBarang) {
   try {
     const nowDate = tanggalSekarang().timeId;
     const [{ id }] = await db
@@ -96,31 +104,38 @@ async function addTransaksi(daftarBarang) {
       nextId = '1000';
     }
     const newId = Number(`${nowDate}${nextId}`);
-    // PRICE CHECK
-    let totalHarga = 0;
-    daftarBarang.map(async (barang, i) => {
-      const [{ harga }] = await db
-        .select('harga')
-        .from('barang')
-        .where('id', '=', barang.barang_id);
-      totalHarga += harga * barang.jumlah;
-      if (i === daftarBarang.length - 1) {
-        // Insert to transaksi
-        const insertTransaksi = await db(tableName).insert({
-          id: newId,
-          created_at: tanggalSekarang().fixUTCTime,
-          total_price: totalHarga,
-          user_id: 1, //CHANGE ME LATER
-        });
-
-        // Insert to transaksi_barang
-        daftarBarang.map(async (value) => {
-          const insertValue = { transaksi_id: newId, ...value };
-          await insertTransaksiBarang(insertValue);
-        });
-        return insertTransaksi;
-      }
+    // Insert to transaksi
+    const insertTransaksi = await db(tableName).insert({
+      id: newId,
+      created_at: tanggalSekarang().fixUTCTime,
+      total_price: totalPrice,
+      user_id: 1, //CHANGE ME LATER
     });
+
+    // Insert to transaksi_barang
+    await insertTransaksiBarang(newId, daftarBarang);
+    return insertTransaksi;
+  } catch (err) {
+    return err;
+  }
+}
+
+async function updateTransaksi(transaksi_id, total_price, daftarBarang) {
+  try {
+    // { id - transaksi_barang, jumlah }
+    await db(tableName).update({ total_price }).where({ id: transaksi_id });
+    await db('transaksi_barang').where({ transaksi_id }).del();
+    await insertTransaksiBarang(transaksi_id, daftarBarang);
+    return true;
+  } catch (err) {
+    return err;
+  }
+}
+
+async function deleteTransaksi(transaksi_id) {
+  try {
+    const del = await db(tableName).where({ id: transaksi_id }).del();
+    return del;
   } catch (err) {
     return err;
   }
@@ -130,4 +145,6 @@ module.exports = {
   getAllTransaksi,
   getOneTransaksi,
   addTransaksi,
+  updateTransaksi,
+  deleteTransaksi,
 };
